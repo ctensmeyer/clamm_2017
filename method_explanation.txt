@@ -1,0 +1,29 @@
+The basic approach is subwindow classification with Deep Convolutional Neural Networks (CNNs) that employ Residual Learning [1] and Batch Normalization [2]. CNNs are trained to classify 227x227 subwindows into one of twelve script classes or into one of 15 date classes.  The CNNs trained for each task are distinct and are not informed by the other task. At test time, the large grayscale manuscript image is cut up into overlapping 227x227 subwindows and each is classified. The resulting classification is then the average prediction of each subwindow. For improved accuracy, predictions are also averaged over an ensemble of CNNs.  The deep learning libary Caffe was used to train the CNNs.
+
+The architecture of each network is that of the 50-layer network in [1], but with fewer convolution filters employed at each layer.  To construct a training set, first all images are downsampled by a factor of 2. 256x256 subwindows were densely extracted from each of the downsampled images at a stride of 42x42 pixels.  The label for each subwindow is the script class of the image from which it was extracted.  We employed standard training protocol:
+- Stochastic Gradient Descent Optimization for 350,000 data mini-batches of 40 randomly drawn instances
+- Initial Learning Rate = 0.01 and is divided by 10 every 80,000 mini-batches
+- L2 Weight Decay regularization of 0.0005
+- Momentum of 0.9
+- Input subwindows are linearly scaled to the range [-.05, 0.5]
+
+Additionally, stochastic transformations were applied to each subwindow during training (but not during testing)
+- The intensity of either the foreground or background pixels (determined using Otsu binarization) is changed by adding a value drawn from a Normal distribution with mean 0 and std dev 30.  We choose to vary all foreground or all background with uniform (50%) probability.
+- The 256x256 subwindow is randomly resized (preserving square dimensions) to have a side length in [227,285]
+- Either a horizontal or vertical shearing is applied with a shear angle uniformly chosen from [0,20].
+- A random 227x227 crop is applied to produce the final input for the network.
+
+Empirically, these stochastic transformations improved performance ~1-2% on some random splits of the given competition data.
+
+At test time, 227x227 subwindows are extracted from the test image at a stride of 100x100 pixels.  The CNN predicts a distribution over the script classes for each subwindow.  These predictions are uniformly averaged together over all subwindows to obtain the overall prediction of the CNN.  
+
+For ensemble predictions, each CNN computes a prediction (averaged over the subwindows extracted at the appropriate scale) and these predictions are uniformly averaged over all CNNs in the ensemble.  We chose to use 5 networks in the ensemble.
+
+The distance matrix and belonging matrix are derived from the average prediction of the CNN ensemble, which is a probability distribution over the types (either script or dates).  The belonging matrix is precisely these predictions and the distance matrix is computed as the pairwise euclidean distance between the prediction vectors.
+
+
+References:
+
+[1] He, K., Zhang, X., Ren, S., & Sun, J. (2015). Deep Residual Learning for Image Recognition. arXiv preprint arXiv:1512.03385.
+
+[2] Ioffe, S., & Szegedy, C. (2015). Batch normalization: Accelerating deep network training by reducing internal covariate shift. arXiv preprint arXiv:1502.03167.
