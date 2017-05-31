@@ -17,6 +17,8 @@ IMAGE_SUFFIXES = ('.jpg', '.jpeg', '.tif', '.tiff', '.png', '.bmp', '.ppm', '.pg
 # The larger the batch size, the more memory is consumed (both CPU and GPU)
 BATCH_SIZE=4
 
+JPG_SHAVE_PERC = 0.15
+
 
 def setup_networks():
 	networks = list()
@@ -116,7 +118,13 @@ def evaluate(networks, image_dir):
 
 		# load, shift, and scale pixel values
 		image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-		image = 0.0039 * (image - 127.)
+
+		if image_file.lower().endswith('jpg'):
+			shave_y = int(image.shape[0] * JPG_SHAVE_PERC)
+			shave_x = int(image.shape[1] * JPG_SHAVE_PERC)
+			image = image[shave_y:-1 * shave_y, shave_x:-1 * shave_x]
+			
+		image = 0.0039 * (image - 128.)
 
 		network_predictions = list()
 		for scale, network in networks:

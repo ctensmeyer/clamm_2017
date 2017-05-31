@@ -15,11 +15,13 @@ Additionally, stochastic transformations were applied to each subwindow during t
 
 Empirically, these stochastic transformations improved performance ~1-2% on some random splits of the given competition data.
 
-At test time, 227x227 subwindows are extracted from the test image at a stride of 100x100 pixels.  The CNN predicts a distribution over the script classes for each subwindow.  These predictions are uniformly averaged together over all subwindows to obtain the overall prediction of the CNN.  
+At test time, 227x227 subwindows are extracted from the test image at a stride of 100x100 pixels.  The CNN predicts a distribution over the script classes for each subwindow.  These predictions are uniformly averaged together over all subwindows to obtain the overall prediction of the CNN.
 
 For ensemble predictions, each CNN computes a prediction (averaged over the subwindows extracted at the appropriate scale) and these predictions are uniformly averaged over all CNNs in the ensemble.  We chose to use 5 networks in the ensemble.
 
 The distance matrix and belonging matrix are derived from the average prediction of the CNN ensemble, which is a probability distribution over the types (either script or dates).  The belonging matrix is precisely these predictions and the distance matrix is computed as the pairwise euclidean distance between the prediction vectors.
+
+For tasks 2 and 4, we convert the color images to grayscale.  Additionally, for test images in JPG format, we center crop them to be 70% of the original dimensions.  Center cropping reduces the number of non-textual patches evaluated because the JPG images are not pre-cropped to pages.
 
 
 References:
