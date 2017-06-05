@@ -8,6 +8,7 @@ import cv2
 
 # default networks to use for prediction
 NET_CONFIG_FILE = "scripts.config"
+JPG_NET_CONFIG_FILE = "scripts_jpg.config"
 
 # acceptable image suffixes
 IMAGE_SUFFIXES = ('.jpg', '.jpeg', '.tif', '.tiff', '.png', '.bmp', '.ppm', '.pgm')
@@ -15,14 +16,14 @@ IMAGE_SUFFIXES = ('.jpg', '.jpeg', '.tif', '.tiff', '.png', '.bmp', '.ppm', '.pg
 # number of subwindows processed by a network in a batch
 # Higher numbers speed up processing (only marginally if BATCH_SIZE > 16)
 # The larger the batch size, the more memory is consumed (both CPU and GPU)
-BATCH_SIZE=4
+BATCH_SIZE=1
 
 JPG_SHAVE_PERC = 0.15
 
 
-def setup_networks():
+def setup_networks(config_file):
 	networks = list()
-	for ln, line in enumerate(open(NET_CONFIG_FILE).readlines()):
+	for ln, line in enumerate(open(config_file).readlines()):
 		try:
 			if line.startswith('#'):
 				continue
@@ -31,7 +32,7 @@ def setup_networks():
 			deploy_file = tokens[1]
 			weights_file = tokens[2]
 		except:
-			print "Error occured in parsing NET_CONFIG_FILE %r on line %d" % (NET_CONFIG_FILE, ln)
+			print "Error occured in parsing NET_CONFIG_FILE %r on line %d" % (config_file, ln)
 			print "Offending line: %r" % line
 			print "Exiting..."
 			exit(1)
@@ -104,7 +105,7 @@ def get_subwindows(im):
 	return ims
 
 	
-def evaluate(networks, image_dir):
+def evaluate(tiff_networks, jpg_networks, image_dir):
 	predictions = list()
 	image_files = list()
 	image_num = 0
@@ -123,6 +124,9 @@ def evaluate(networks, image_dir):
 			shave_y = int(image.shape[0] * JPG_SHAVE_PERC)
 			shave_x = int(image.shape[1] * JPG_SHAVE_PERC)
 			image = image[shave_y:-1 * shave_y, shave_x:-1 * shave_x]
+			networks = jpg_networks
+		else:
+			networks = tiff_networks
 			
 		image = 0.0039 * (image - 128.)
 
@@ -196,8 +200,9 @@ def write_results(image_files, predictions, out_dir):
 
 
 def main(image_dir, out_dir):
-	networks = setup_networks()
-	image_files, predictions = evaluate(networks, image_dir)
+	networks = setup_networks(NET_CONFIG_FILE)
+	jpg_networks = setup_networks(JPG_NET_CONFIG_FILE)
+	image_files, predictions = evaluate(networks, jpg_networks, image_dir)
 	write_results(image_files, predictions, out_dir)
 
 
@@ -225,6 +230,7 @@ if __name__ == "__main__":
 	try:
 		if sys.argv[3] == 'dates':
 			NET_CONFIG_FILE = 'dates.config'
+			JPG_NET_CONFIG_FILE = 'dates_jpg.config'
 			print "Predicting Date Types"
 		else:
 			print "Predicting Script Types"
