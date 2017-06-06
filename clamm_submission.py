@@ -16,7 +16,7 @@ IMAGE_SUFFIXES = ('.jpg', '.jpeg', '.tif', '.tiff', '.png', '.bmp', '.ppm', '.pg
 # number of subwindows processed by a network in a batch
 # Higher numbers speed up processing (only marginally if BATCH_SIZE > 16)
 # The larger the batch size, the more memory is consumed (both CPU and GPU)
-BATCH_SIZE=1
+BATCH_SIZE=4
 
 JPG_SHAVE_PERC = 0.15
 
